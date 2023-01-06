@@ -4,8 +4,6 @@ from aes.aes import aes_round
 
 BLOCK_SIZE = 16
 
-const = bytes.fromhex('000101020305080d1522375990e97962db3d18556dc22ff12011314273b528dd')
-
 
 def split_into_blocks(b: bytes, size: int) -> list[bytes]:
     return [b[i:i + size] for i in range(0, len(b), size)]
@@ -18,17 +16,19 @@ def b_and(a: bytes, b: bytes) -> bytes:
 def state_update_128(s: bytes, m: bytes) -> bytes:
     s = split_into_blocks(s, BLOCK_SIZE)
 
-    s_next = aes_round(s[4], xor(s[0], m)) \
-             + aes_round(s[0], s[1]) \
-             + aes_round(s[1], s[2]) \
-             + aes_round(s[2], s[3]) \
-             + aes_round(s[3], s[4])
+    s_next = \
+        aes_round(s[4], xor(s[0], m)) + \
+        aes_round(s[0], s[1]) + \
+        aes_round(s[1], s[2]) + \
+        aes_round(s[2], s[3]) + \
+        aes_round(s[3], s[4])
 
     return s_next
 
 
 def initialize(k: bytes, iv: bytes) -> bytes:
-    const_0, const_1 = split_into_blocks(const, BLOCK_SIZE)
+    const_0 = bytes.fromhex('000101020305080d1522375990e97962')
+    const_1 = bytes.fromhex('db3d18556dc22ff12011314273b528dd')
 
     s = xor(k, iv) + const_1 + const_0 + xor(k, const_0) + xor(k, const_1)
 
@@ -75,8 +75,8 @@ def encrypt_msg(s: bytes, p: bytes) -> (bytes, bytes):
 def finalize(s: bytes, ad: bytes, p: bytes) -> bytes:
     sb = split_into_blocks(s, BLOCK_SIZE)
 
-    adlen = (len(ad)*8).to_bytes(8, byteorder='little')
-    msglen = (len(p)*8).to_bytes(8, byteorder='little')
+    adlen = (len(ad) * 8).to_bytes(8, byteorder='little')
+    msglen = (len(p) * 8).to_bytes(8, byteorder='little')
 
     tmp = xor(sb[3], adlen + msglen)
 
