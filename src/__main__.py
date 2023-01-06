@@ -1,7 +1,7 @@
 import json
 import os
 
-from aegis_128 import encrypt
+from aegis_128 import encrypt, decrypt
 
 
 def path_from_here(path: str) -> str:
@@ -29,14 +29,19 @@ def main():
         e_tag = v['tag']
 
         ct, tag = encrypt(k, iv, ad, pt)
+        d_pt = decrypt(k, iv, ad, ct, tag)
 
         try:
             assert e_ct == ct
             assert e_tag == tag
+            assert pt == d_pt
         except AssertionError as err:
             print_test_debug('ciphertext', e_ct, ct)
             print_test_debug('tag', e_tag, tag)
+            print_test_debug('decrypted pt', pt, d_pt)
             raise err
+
+    print(f'All {len(vectors)} tests passed!')
 
 
 if __name__ == '__main__':
