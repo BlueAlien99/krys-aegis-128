@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -14,7 +15,7 @@ def print_test_debug(label: str, expected: str, received: str) -> None:
     print(f"Received: {received}")
 
 
-def main():
+def run_tests():
     with open(path_from_here('../test-vectors.json')) as fp:
         vectors = json.load(fp)
 
@@ -42,6 +43,42 @@ def main():
             raise err
 
     print(f'All {len(vectors)} tests passed!')
+
+
+def parse_arg(val):
+    return (val or '').encode("utf-8").hex()
+
+
+def run_encrypt(args):
+    ct, tag = encrypt(*map(lambda x: parse_arg(vars(args)[x]), ['key', 'iv', 'ad', 'text']))
+    print(json.dumps({'ct': ct, 'tag': tag}))
+
+
+def run_decrypt(args):
+    pt = decrypt(*map(lambda x: parse_arg(vars(args)[x]), ['key', 'iv', 'ad']),
+                 *map(lambda x: vars(args)[x] or '', ['text', 'tag']))
+    print(bytes.fromhex(pt).decode())
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Test and play with AEGIS-128')
+    parser.add_argument('-m', '--mode', choices=['t', 'e', 'd'], required=True, help='test, encrypt or decrypt')
+    parser.add_argument('--key', help='key')
+    parser.add_argument('--iv', help='initializing vector')
+    parser.add_argument('--ad', help='associated data')
+    parser.add_argument('--text', help='plaintext or ciphertext')
+    parser.add_argument('--tag', help='verification tag')
+
+    args = parser.parse_args()
+
+    mode = args.mode
+    if mode == 't':
+        return run_tests()
+    if mode == 'e':
+        return run_encrypt(args)
+    if mode == 'd':
+        return run_decrypt(args)
+    return parser.print_help()
 
 
 if __name__ == '__main__':

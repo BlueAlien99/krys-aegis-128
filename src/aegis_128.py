@@ -111,11 +111,19 @@ def _finalize(s: bytes, ad: bytes, p: bytes) -> bytes:
     return tag
 
 
+def check_params(params):
+    for key in params:
+        if len(params[key]) != BLOCK_SIZE:
+            raise ValueError(f'{key} must have a length of {BLOCK_SIZE} bytes')
+
+
 def encrypt(k: str, iv: str, ad: str, p: str) -> (str, str):
     k = bytes.fromhex(k)
     iv = bytes.fromhex(iv)
     ad = bytes.fromhex(ad)
     p = bytes.fromhex(p)
+
+    check_params({'key': k, 'iv': iv})
 
     s = _initialize(k, iv)
     s = _process_ad(s, ad)
@@ -131,6 +139,8 @@ def decrypt(k: str, iv: str, ad: str, c: str, tag: str) -> str:
     ad = bytes.fromhex(ad)
     c = bytes.fromhex(c)
     tag = bytes.fromhex(tag)
+
+    check_params({'key': k, 'iv': iv})
 
     s = _initialize(k, iv)
     s = _process_ad(s, ad)
